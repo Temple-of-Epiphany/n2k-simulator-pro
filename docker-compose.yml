@@ -38,18 +38,18 @@ services:
       - CAN_SOURCE_ADDRESS=42
       # Serial port configuration (RS485/RS232 NMEA 0183)
       - SERIAL_ENABLED=false
-      - SERIAL_PORT=/dev/ttyUSB0
+      - SERIAL_PORT=/dev/tty.usbserial-BG00Q6UZ  # Waveshare RS485 interface
       - SERIAL_BAUDRATE=4800
     # Device access for hardware interfaces
     devices:
-      # USB serial ports (CAN adapters, RS485 adapters, GPS)
-      - /dev/ttyUSB0:/dev/ttyUSB0        # USB serial adapter 0
-      - /dev/ttyUSB1:/dev/ttyUSB1        # USB serial adapter 1
-      # Add macOS USB serial devices (uncomment on macOS)
-      # - /dev/tty.usbserial:/dev/tty.usbserial
-      # - /dev/tty.usbserial-0001:/dev/tty.usbserial-0001
-      # Waveshare CAN/RS485 adapters (USB-to-CAN, USB-to-RS485)
-      # - /dev/ttyACM0:/dev/ttyACM0      # Waveshare USB adapters (ACM)
+      # macOS USB serial devices (CAN/RS485 adapters)
+      - /dev/tty.usbmodem2101:/dev/tty.usbmodem2101          # USB modem (CANable/CDC ACM)
+      - /dev/tty.usbserial-1110:/dev/tty.usbserial-1110      # USB-serial adapter
+      - /dev/tty.usbserial-BG00Q6UZ:/dev/tty.usbserial-BG00Q6UZ  # Waveshare RS485 interface
+      # Linux USB serial ports (uncomment on Linux)
+      # - /dev/ttyUSB0:/dev/ttyUSB0        # USB serial adapter 0
+      # - /dev/ttyUSB1:/dev/ttyUSB1        # USB serial adapter 1
+      # - /dev/ttyACM0:/dev/ttyACM0        # Waveshare USB adapters (ACM)
     # Network capabilities for CAN bus (socketcan)
     cap_add:
       - NET_ADMIN                        # Required for CAN network interfaces
