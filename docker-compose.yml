@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # N2K Data Simulator - NMEA 2000 GPS and Navigation Data Generator
+  n2k-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: n2k-simulator-pro
+    ports:
+      - "192.168.68.51:9001:8081"      # Web interface
+      - "192.168.68.51:2000:2000/udp"  # UDP NMEA output (standard port)
+      - "192.168.68.51:10110:10110"    # TCP NMEA output (standard port)
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8081
+      - UDP_PORT=2000
+      - TCP_PORT=10110
+      - START_LAT=30.0245
+      - START_LON=-90.034533
+      - AUTO_START=false
+      - DEBUG=false
+      # NMEA 2000 Device Identification (Garmin GPS)
+      - N2K_MANUFACTURER_CODE=172        # 172 = Garmin
+      - N2K_UNIQUE_NUMBER=2025001        # Device serial number
+      - N2K_DEVICE_FUNCTION=140          # 140 = GPS
+      - N2K_DEVICE_CLASS=25              # 25 = Inter/Intranetwork Device
+      - N2K_DEVICE_INSTANCE=0            # First GPS on network
+      - N2K_SYSTEM_INSTANCE=0
+      - N2K_INDUSTRY_GROUP=4             # 4 = Marine
+      # Vessel Heading (PGN 127250)
+      - HEADING_ENABLED=true             # Enable compass heading broadcast
+      # CAN bus configuration
+      - CAN_ENABLED=false
+      - CAN_CHANNEL=slcan0
+      - CAN_BUSTYPE=socketcan
+      - CAN_BITRATE=250000
+      - CAN_SOURCE_ADDRESS=42
+      # Serial port configuration (RS485/RS232 NMEA 0183)
+      - SERIAL_ENABLED=false
+      - SERIAL_PORT=/dev/ttyUSB0
+      - SERIAL_BAUDRATE=4800
+    # Device access for hardware interfaces
+    devices:
+      # USB serial ports (CAN adapters, RS485 adapters, GPS)
+      - /dev/ttyUSB0:/dev/ttyUSB0        # USB serial adapter 0
+      - /dev/ttyUSB1:/dev/ttyUSB1        # USB serial adapter 1
+      # Add macOS USB serial devices (uncomment on macOS)
+      # - /dev/tty.usbserial:/dev/tty.usbserial
+      # - /dev/tty.usbserial-0001:/dev/tty.usbserial-0001
+      # Waveshare CAN/RS485 adapters (USB-to-CAN, USB-to-RS485)
+      # - /dev/ttyACM0:/dev/ttyACM0      # Waveshare USB adapters (ACM)
+    # Network capabilities for CAN bus (socketcan)
+    cap_add:
+      - NET_ADMIN                        # Required for CAN network interfaces
+    # Privileged mode for full hardware access (use sparingly)
+    # privileged: true
+    # Network mode: Use 'host' for direct CAN bus access (Linux only)
+    # network_mode: host                # Uncomment for CAN bus on Linux
+    volumes:
+      - ./n2k-simulator:/app/n2k-simulator:ro
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  logs:
+    driver: local
+
+# Notes:
+# 1. For CAN bus access on Linux, uncomment network_mode: host
+# 2. For macOS USB serial devices, add /dev/tty.usbserial* devices
+# 3. For Waveshare adapters, ensure udev rules are configured (see docs/can_bus_setup.md)
+# 4. RS485 typically uses /dev/ttyUSB* or /dev/ttyACM* devices
+# 5. CAN adapters may require SLCAN initialization (see docs/can_setup_macos.md)
